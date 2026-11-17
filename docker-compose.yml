@@ -1,0 +1,12 @@
+services:
+  gift-list:
+    build: .
+    ports:
+      - "8585:8585"
+    environment:
+      - PORT=8585
+      - DATA_DIR=/app/data
+      - WEB_DIST=/app/public
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

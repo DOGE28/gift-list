@@ -1,0 +1,16 @@
+{
+  "name": "gift-list",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Secure gift-request PWA with events, individuals, guest tokens, and scraped item metadata",
+  "scripts": {
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "start": "npm run start --workspace server"
+  },
+  "workspaces": [
+    "server",
+    "web"
+  ]
+}
