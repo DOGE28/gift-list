@@ -10,8 +10,8 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showIndividualModal, setShowIndividualModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', description: '', startDate: '', endDate: '' });
-  const [newIndividual, setNewIndividual] = useState({ displayName: '', notes: '' });
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', eventDate: '' });
+  const [newIndividual, setNewIndividual] = useState({ name: '', notes: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,7 +40,7 @@ function DashboardPage() {
     setError('');
     try {
       const data = await api.createEvent(newEvent);
-      setNewEvent({ title: '', description: '', startDate: '', endDate: '' });
+      setNewEvent({ title: '', description: '', eventDate: '' });
       setShowEventModal(false);
       await load();
     } catch (err) {
@@ -56,7 +56,7 @@ function DashboardPage() {
     setError('');
     try {
       const data = await api.createIndividual(newIndividual);
-      setNewIndividual({ displayName: '', notes: '' });
+      setNewIndividual({ name: '', notes: '' });
       setShowIndividualModal(false);
       await load();
     } catch (err) {
@@ -99,7 +99,7 @@ function DashboardPage() {
               </h3>
               {event.description && <p>{event.description}</p>}
               <div className="meta">
-                {event.start_date} → {event.end_date}
+                {event.event_date || 'No date set'}
                 {event.is_active ? ' · Active' : ' · Inactive'}
               </div>
             </div>
@@ -113,7 +113,7 @@ function DashboardPage() {
         <div className="grid">
           {individuals.map((ind) => (
             <div key={ind.id} className="card">
-              <h3>{ind.display_name}</h3>
+              <h3>{ind.name}</h3>
               {ind.notes && <p>{ind.notes}</p>}
               <div className="meta">
                 Owner: {ind.owner_id === user.id ? 'You' : 'Other'}
@@ -149,22 +149,12 @@ function DashboardPage() {
                 />
               </div>
               <div>
-                <label htmlFor="event-start">Start Date</label>
+                <label htmlFor="event-date">Event Date</label>
                 <input
-                  id="event-start"
+                  id="event-date"
                   type="date"
-                  value={newEvent.startDate}
-                  onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="event-end">End Date</label>
-                <input
-                  id="event-end"
-                  type="date"
-                  value={newEvent.endDate}
-                  onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+                  value={newEvent.eventDate}
+                  onChange={(e) => setNewEvent({ ...newEvent, eventDate: e.target.value })}
                   required
                 />
               </div>
@@ -189,12 +179,12 @@ function DashboardPage() {
             <h3>Create Individual</h3>
             <form onSubmit={handleCreateIndividual}>
               <div>
-                <label htmlFor="ind-name">Display Name</label>
+                <label htmlFor="ind-name">Name</label>
                 <input
                   id="ind-name"
                   type="text"
-                  value={newIndividual.displayName}
-                  onChange={(e) => setNewIndividual({ ...newIndividual, displayName: e.target.value })}
+                  value={newIndividual.name}
+                  onChange={(e) => setNewIndividual({ ...newIndividual, name: e.target.value })}
                   required
                 />
               </div>

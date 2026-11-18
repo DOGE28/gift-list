@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
   const individuals = db
     .prepare('SELECT * FROM individuals WHERE user_id = ? ORDER BY created_at DESC')
     .all(req.user.id);
-  res.json(individuals);
+  res.json({ individuals });
 });
 
 // POST /api/individuals

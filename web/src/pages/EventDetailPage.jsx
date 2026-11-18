@@ -9,6 +9,7 @@ function EventDetailPage() {
   const [event, setEvent] = useState(null);
   const [items, setItems] = useState([]);
   const [participants, setParticipants] = useState([]);
+  const [individuals, setIndividuals] = useState([]);
   const [guestTokens, setGuestTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -23,16 +24,18 @@ function EventDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const [eventData, itemsData, participantsData, tokensData] = await Promise.all([
+      const [eventData, itemsData, participantsData, tokensData, individualsData] = await Promise.all([
         api.getEvent(eventId),
         api.getItems(eventId),
         api.getEvent(eventId).then(() => api.getEvent(eventId)), // participants embedded
         api.getGuestTokens(eventId),
+        api.getIndividuals(),
       ]);
       setEvent(eventData.event);
       setItems(itemsData.items || []);
       setParticipants(eventData.participants || []);
       setGuestTokens(tokensData.tokens || []);
+      setIndividuals(individualsData.individuals || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -155,7 +158,7 @@ function EventDetailPage() {
           <h2>{event.title}</h2>
           {event.description && <p>{event.description}</p>}
           <div className="meta">
-            {event.start_date} → {event.end_date}
+            {event.event_date || 'No date set'}
             {event.is_active ? ' · Active' : ' · Inactive'}
           </div>
           <div style={{ marginTop: '0.5rem' }}>
@@ -190,7 +193,7 @@ function EventDetailPage() {
         <div className="grid">
           {participants.map((p) => (
             <div key={p.individual_id} className="card">
-              <h3>{p.display_name}</h3>
+              <h3>{p.name}</h3>
               {p.notes && <p>{p.notes}</p>}
             </div>
           ))}
@@ -305,6 +308,11 @@ function EventDetailPage() {
                   required
                 >
                   <option value="">Select…</option>
+                  {individuals.map((ind) => (
+                    <option key={ind.id} value={ind.id}>
+                      {ind.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>

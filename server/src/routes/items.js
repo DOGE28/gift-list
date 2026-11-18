@@ -60,7 +60,7 @@ router.get('/:id/items', (req, res) => {
     .all(eventId);
 
   const filtered = filterItemsForViewer(db, req.user.id, items);
-  res.json(filtered);
+        res.json({ items: filtered });
 });
 
 // POST /api/events/:id/items
@@ -71,7 +71,7 @@ router.post('/:id/items', handle(async (req, res) => {
     throw httpError(403, 'Not authorized to view this event');
   }
 
-  const { individualId, title, price, url, purchased } = req.body;
+    const { individual_id: individualId, title, price, url, purchased } = req.body;
 
   if (!individualId) {
     throw httpError(400, 'individualId is required');

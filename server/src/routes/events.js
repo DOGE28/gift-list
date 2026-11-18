@@ -68,7 +68,7 @@ router.get('/', (req, res) => {
   }
 
   const allEvents = [...events, ...visibleEvents];
-  res.json(allEvents);
+    res.json({ events: allEvents });
 });
 
 // POST /api/events
@@ -119,6 +119,27 @@ router.get('/:id', (req, res) => {
     items: filteredItems,
     guestTokens: tokens,
   });
+});
+
+// GET /api/events/:id/guest-tokens
+router.get('/:id/guest-tokens', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  const event = db
+    .prepare('SELECT * FROM events WHERE id = ?')
+    .get(id);
+  if (!event) {
+    throw httpError(404, 'Event not found');
+  }
+  if (event.user_id !== req.user.id && !req.user.is_admin) {
+    throw httpError(403, 'Access denied');
+  }
+
+  const tokens = db
+    .prepare('SELECT id, token, created_at FROM guest_tokens WHERE event_id = ?')
+    .all(id);
+
+  res.json({ tokens });
 });
 
 // PUT /api/events/:id
@@ -175,7 +196,7 @@ router.delete('/:id', handle((req, res) => {
 // POST /api/events/:id/participants
 router.post('/:id/participants', handle((req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  const { individualId } = req.body;
+    const { individual_id: individualId } = req.body;
 
   if (!individualId) {
     throw httpError(400, 'individualId is required');
