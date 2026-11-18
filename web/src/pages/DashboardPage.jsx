@@ -116,7 +116,7 @@ function DashboardPage() {
               <h3>{ind.name}</h3>
               {ind.notes && <p>{ind.notes}</p>}
               <div className="meta">
-                Owner: {ind.owner_id === user.id ? 'You' : 'Other'}
+                Owner: {ind.user_id === user.id ? 'You' : 'Other'}
               </div>
             </div>
           ))}

@@ -82,7 +82,7 @@ router.post('/', handle((req, res) => {
   }
 
   const result = db
-    .prepare('INSERT INTO events (user_id, title, description, event_date) VALUES (?, ?, ?, ?)')
+    .prepare('INSERT INTO events (user_id, title, description, event_date, is_active) VALUES (?, ?, ?, ?, 1)')
     .run(req.user.id, title.trim(), description || null, eventDate || null);
 
   const event = db
@@ -156,11 +156,12 @@ router.put('/:id', handle((req, res) => {
     throw httpError(403, 'Not your event');
   }
 
-  const { title, description, eventDate } = req.body;
-  db.prepare('UPDATE events SET title = ?, description = ?, event_date = ? WHERE id = ?').run(
+  const { title, description, eventDate, is_active } = req.body;
+  db.prepare('UPDATE events SET title = ?, description = ?, event_date = ?, is_active = ? WHERE id = ?').run(
     title ? title.trim() : event.title,
     description || null,
     eventDate || null,
+    is_active === undefined ? event.is_active : is_active ? 1 : 0,
     id
   );
 

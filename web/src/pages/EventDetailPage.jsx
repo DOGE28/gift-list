@@ -15,7 +15,7 @@ function EventDetailPage() {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [showGuestTokenModal, setShowGuestTokenModal] = useState(false);
-  const [newItem, setNewItem] = useState({ name: '', url: '', quantity: 1 });
+  const [newItem, setNewItem] = useState({ title: '', url: '', individual_id: '' });
   const [newParticipant, setNewParticipant] = useState({ individual_id: '' });
   const [newTokenLabel, setNewTokenLabel] = useState('');
   const [newToken, setNewToken] = useState(null);
@@ -53,7 +53,7 @@ function EventDetailPage() {
     setError('');
     try {
       await api.createItem(eventId, newItem);
-      setNewItem({ name: '', url: '', quantity: 1 });
+      setNewItem({ title: '', url: '', individual_id: '' });
       setShowAddItem(false);
       await load();
     } catch (err) {
@@ -114,7 +114,7 @@ function EventDetailPage() {
 
   async function handleTogglePurchased(item) {
     try {
-      await api.updateItem(item.id, { is_purchased: !item.is_purchased });
+      await api.updateItem(item.id, { purchased: !item.purchased });
       await load();
     } catch (err) {
       setError(err.message);
@@ -210,17 +210,17 @@ function EventDetailPage() {
                 <div className="name">
                   {item.url ? (
                     <a href={item.url} target="_blank" rel="noopener noreferrer">
-                      {item.name}
+                      {item.title}
                     </a>
                   ) : (
-                    item.name
+                    item.title
                   )}
-                  {item.is_purchased && <span className="badge badge-purchased">Purchased</span>}
+                  {item.purchased && <span className="badge badge-purchased">Purchased</span>}
                   {item.added_by_guest_token && <span className="badge badge-guest">Guest</span>}
                 </div>
                 <div className="meta">
-                  {item.quantity > 1 && `× ${item.quantity}`}
                   {item.price && ` · $${item.price}`}
+                  {item.individual && ` · For ${item.individual.name}`}
                 </div>
               </div>
               <div className="item-actions">
@@ -228,7 +228,7 @@ function EventDetailPage() {
                   className="btn btn-secondary btn-sm"
                   onClick={() => handleTogglePurchased(item)}
                 >
-                  {item.is_purchased ? 'Unmark' : 'Mark Purchased'}
+                  {item.purchased ? 'Unmark' : 'Mark Purchased'}
                 </button>
                 {item.added_by_user_id === user.id && (
                   <button
@@ -251,12 +251,12 @@ function EventDetailPage() {
             <h3>Add Gift Item</h3>
             <form onSubmit={handleCreateItem}>
               <div>
-                <label htmlFor="item-name">Name</label>
+                <label htmlFor="item-title">Title</label>
                 <input
-                  id="item-name"
+                  id="item-title"
                   type="text"
-                  value={newItem.name}
-                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                  value={newItem.title}
+                  onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
                   required
                 />
               </div>
@@ -270,13 +270,30 @@ function EventDetailPage() {
                 />
               </div>
               <div>
-                <label htmlFor="item-qty">Quantity</label>
+                <label htmlFor="item-individual">For</label>
+                <select
+                  id="item-individual"
+                  value={newItem.individual_id}
+                  onChange={(e) => setNewItem({ ...newItem, individual_id: e.target.value })}
+                  required
+                >
+                  <option value="">Select participant…</option>
+                  {participants.map((p) => (
+                    <option key={p.individual_id} value={p.individual_id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="item-price">Price (optional)</label>
                 <input
-                  id="item-qty"
+                  id="item-price"
                   type="number"
-                  min="1"
-                  value={newItem.quantity}
-                  onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value, 10) || 1 })}
+                  min="0"
+                  step="0.01"
+                  value={newItem.price || ''}
+                  onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                 />
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>

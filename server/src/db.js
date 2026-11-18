@@ -36,6 +36,7 @@ db.exec(`
     title TEXT NOT NULL,
     description TEXT,
     event_date TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -82,6 +83,12 @@ if (!userColumns.includes('must_change_password')) {
 }
 if (!userColumns.includes('is_admin')) {
   db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+}
+
+// Migration: ensure is_active column exists on events
+const eventColumns = db.prepare('PRAGMA table_info(events)').all().map((c) => c.name);
+if (!eventColumns.includes('is_active')) {
+  db.exec('ALTER TABLE events ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');
 }
 
 // Seed default admin if not present
