@@ -34,6 +34,12 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
+  const changeCredentials = useCallback(async (email, password) => {
+    const data = await api.changeCredentials({ email, password });
+    setUser(data.user);
+    return data;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.logout();
@@ -44,7 +50,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, fetchMe, isAuthenticated: !!user }}
+      value={{ user, loading, login, register, logout, fetchMe, changeCredentials, isAuthenticated: !!user }}
     >
       {children}
     </AuthContext.Provider>

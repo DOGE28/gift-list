@@ -17,7 +17,12 @@ import guestRoutes from './routes/guest.js';
 const app = express();
 
 // --- Security middleware ---
-app.use(helmet());
+app.use(helmet({
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  strictTransportSecurity: false,
+  contentSecurityPolicy: false,
+}));
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 

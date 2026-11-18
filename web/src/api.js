@@ -33,6 +33,7 @@ export const api = {
   login: (data) => request('/auth/login', { method: 'POST', body: data }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
+  changeCredentials: (data) => request('/auth/change-credentials', { method: 'POST', body: data }),
 
   // Individuals
   getIndividuals: () => request('/users'),

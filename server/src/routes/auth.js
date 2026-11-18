@@ -21,6 +21,26 @@ function setAuthCookie(res, token) {
   });
 }
 
+function validatePassword(password) {
+  if (password.length < 8) return 'Password must be at least 8 characters';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one capital letter';
+  if (!/[^a-zA-Z0-9 ]/.test(password)) return 'Password must contain at least one special character';
+  return null;
+}
+
+function userResponse(user) {
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      displayName: user.display_name,
+      mustChangePassword: !!user.must_change_password,
+      isAdmin: !!user.is_admin,
+    },
+  };
+}
+
 // POST /api/auth/register
 router.post(
   '/register',
@@ -35,8 +55,9 @@ router.post(
     if (normalizedEmail.length < 3 || normalizedEmail.length > 254) {
       throw httpError(400, 'Invalid email');
     }
-    if (password.length < 8) {
-      throw httpError(400, 'Password must be at least 8 characters');
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      throw httpError(400, passwordError);
     }
     if (displayName.length > 100) {
       throw httpError(400, 'Display name too long');
@@ -65,7 +86,10 @@ router.post(
     const token = signToken(userId);
     setAuthCookie(res, token);
 
-    res.status(201).json({ id: userId, email: normalizedEmail, displayName: displayName.trim() });
+    const user = db
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .get(userId);
+    res.status(201).json(userResponse(user));
   })
 );
 
@@ -94,7 +118,7 @@ router.post(
     const token = signToken(user.id);
     setAuthCookie(res, token);
 
-    res.json({ id: user.id, email: user.email, displayName: user.display_name });
+    res.json(userResponse(user));
   })
 );
 
@@ -111,12 +135,62 @@ router.post('/logout', (req, res) => {
 // GET /api/auth/me
 router.get('/me', requireAuth, (req, res) => {
   const user = db
-    .prepare('SELECT id, email, display_name FROM users WHERE id = ?')
+    .prepare('SELECT * FROM users WHERE id = ?')
     .get(req.user.id);
   if (!user) {
     throw httpError(401, 'User not found');
   }
-  res.json({ id: user.id, email: user.email, displayName: user.display_name });
+  res.json(userResponse(user));
 });
+
+// POST /api/auth/change-credentials
+router.post(
+  '/change-credentials',
+  requireAuth,
+  handle(async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      throw httpError(400, 'email and password are required');
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    if (normalizedEmail.length < 3 || normalizedEmail.length > 254) {
+      throw httpError(400, 'Invalid email');
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      throw httpError(400, passwordError);
+    }
+
+    // Check if the new email is already taken by another user
+    const existing = db
+      .prepare('SELECT id FROM users WHERE email = ? AND id != ?')
+      .get(normalizedEmail, req.user.id);
+    if (existing) {
+      throw httpError(409, 'Email already in use');
+    }
+
+    const hash = await argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
+
+    db.prepare(
+      'UPDATE users SET email = ?, password_hash = ?, must_change_password = 0 WHERE id = ?'
+    ).run(normalizedEmail, hash, req.user.id);
+
+    const user = db
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .get(req.user.id);
+
+    const token = signToken(user.id);
+    setAuthCookie(res, token);
+
+    res.json(userResponse(user));
+  })
+);
 
 export default router;

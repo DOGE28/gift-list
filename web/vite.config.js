@@ -7,10 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+      includeAssets: ['**/*.{js,css,ico,png,svg,webmanifest}'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/assets\//],
         runtimeCaching: [
           {
             urlPattern: /^\/api\/.*/i,

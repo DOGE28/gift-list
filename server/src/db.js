@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'node:path';
 import fs from 'node:fs';
+import argon2 from 'argon2';
 import { dataDir, dbFile } from './config.js';
 
 // Ensure data directory exists
@@ -11,13 +12,15 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      must_change_password INTEGER NOT NULL DEFAULT 0,
+      is_admin INTEGER NOT NULL DEFAULT 0
+    );
 
   CREATE TABLE IF NOT EXISTS individuals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,5 +74,30 @@ db.exec(`
     scraped_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// Migration: ensure must_change_password and is_admin columns exist
+const userColumns = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+if (!userColumns.includes('must_change_password')) {
+  db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
+}
+if (!userColumns.includes('is_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+}
+
+// Seed default admin if not present
+const existingAdmin = db
+  .prepare('SELECT id FROM users WHERE email = ?')
+  .get('admin@changeme.com');
+if (!existingAdmin) {
+  const adminHash = await argon2.hash('admin123', {
+    type: argon2.argon2id,
+    memoryCost: 65536,
+    timeCost: 3,
+    parallelism: 4,
+  });
+  db.prepare(
+    'INSERT INTO users (email, password_hash, display_name, must_change_password, is_admin) VALUES (?, ?, ?, ?, ?)'
+  ).run('admin@changeme.com', adminHash, 'Admin', 1, 1);
+}
 
 export default db;

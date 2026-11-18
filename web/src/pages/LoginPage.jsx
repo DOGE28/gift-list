@@ -13,7 +13,8 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && user) {
-    return <Navigate to="/dashboard" replace />;
+    const dest = user.mustChangePassword ? '/change-credentials' : '/dashboard';
+    return <Navigate to={dest} replace />;
   }
 
   async function handleSubmit(e) {
@@ -21,12 +22,14 @@ function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
+      let data;
       if (mode === 'login') {
-        await login(email, password);
+        data = await login(email, password);
       } else {
-        await register(email, password, displayName);
+        data = await register(email, password, displayName);
       }
-      navigate('/dashboard');
+      const dest = data.user.mustChangePassword ? '/change-credentials' : '/dashboard';
+      navigate(dest);
     } catch (err) {
       setError(err.message);
     } finally {

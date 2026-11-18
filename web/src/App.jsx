@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import EventDetailPage from './pages/EventDetailPage.jsx';
 import GuestAddPage from './pages/GuestAddPage.jsx';
+import ChangeCredentialsPage from './pages/ChangeCredentialsPage.jsx';
 
 function App() {
   return (
@@ -24,6 +25,14 @@ function App() {
         element={
           <ProtectedRoute>
             <EventDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/change-credentials"
+        element={
+          <ProtectedRoute>
+            <ChangeCredentialsPage />
           </ProtectedRoute>
         }
       />
